@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Citizen Dashboard{% endblock %}
+
+{% block content %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Submit a New Complaint</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('citizen.submit_complaint') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="service_id" class="form-label">Service Type</label>
+                    <select class="form-select" id="service_id" name="service_id" required>
+                        <option value="1">Water Supply</option>
+                        <option value="2">Streetlights</option>
+                        <option value="3">Sanitation</option>
+                        <option value="4">Roads</option>
+                        <option value="5">Garbage Collection</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="location" name="location" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Complaint</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i> Your Complaints</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Service ID</th>
+                        <th>Description</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr>
+                        <td>{{ complaint[0] }}</td>
+                        <td>{{ complaint[2] }}</td>
+                        <td>{{ complaint[3] }}</td>
+                        <td>{{ complaint[4] }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if complaint[5] == 'Pending' %}bg-warning
+                                {% elif complaint[5] == 'In Progress' %}bg-info
+                                {% elif complaint[5] == 'Resolved' %}bg-success
+                                {% endif %}">
+                                {{ complaint[5] }}
+                            </span>
+                        </td>
+                        <td>{{ complaint[6] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

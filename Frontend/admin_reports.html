@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Reports & Analytics</h2>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Complaints by Status</div>
+            <div class="card-body">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Complaints by Service</div>
+            <div class="card-body">
+                <canvas id="serviceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Complaints Over Time</div>
+            <div class="card-body">
+                <canvas id="timeChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Complaints by Location</div>
+            <div class="card-body">
+                <canvas id="locationChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Average Resolution Time (Days)</div>
+            <div class="card-body">
+                <canvas id="resolutionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Complaints by Status
+        const statusData = {
+            labels: [{% for item in status_data %}"{{ item[0] }}",{% endfor %}],
+            datasets: [{
+                data: [{% for item in status_data %}{{ item[1] }},{% endfor %}],
+                backgroundColor: ['#ffc107', '#0dcaf0', '#198754']
+            }]
+        };
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            new Chart(statusCtx, { type: 'pie', data: statusData });
+        }
+
+        // Complaints by Service
+        const serviceData = {
+            labels: [{% for item in service_data %}"{{ item[0] }}",{% endfor %}],
+            datasets: [{
+                label: 'Complaints',
+                data: [{% for item in service_data %}{{ item[1] }},{% endfor %}],
+                backgroundColor: '#0d6efd'
+            }]
+        };
+        const serviceCtx = document.getElementById('serviceChart');
+        if (serviceCtx) {
+            new Chart(serviceCtx, { type: 'bar', data: serviceData });
+        }
+
+        // Complaints Over Time
+        const timeData = {
+            labels: [{% for item in complaints_over_time_data %}"{{ item[0] }}",{% endfor %}],
+            datasets: [{
+                label: 'Complaints',
+                data: [{% for item in complaints_over_time_data %}{{ item[1] }},{% endfor %}],
+                borderColor: '#6f42c1',
+                fill: false,
+                tension: 0.1
+            }]
+        };
+        const timeCtx = document.getElementById('timeChart');
+        if (timeCtx) {
+            new Chart(timeCtx, { type: 'line', data: timeData });
+        }
+
+        // Complaints by Location
+        const locationData = {
+            labels: [{% for item in complaints_by_location %}"{{ item[0] }}",{% endfor %}],
+            datasets: [{
+                label: 'Complaints',
+                data: [{% for item in complaints_by_location %}{{ item[1] }},{% endfor %}],
+                backgroundColor: '#d63384'
+            }]
+        };
+        const locationCtx = document.getElementById('locationChart');
+        if (locationCtx) {
+            new Chart(locationCtx, { type: 'bar', data: locationData });
+        }
+
+        // Average Resolution Time
+        const resolutionData = {
+            labels: [{% for item in resolution_time_data %}"{{ item[0] }}",{% endfor %}],
+            datasets: [{
+                label: 'Days',
+                data: [{% for item in resolution_time_data %}{{ item[1] or 0 }},{% endfor %}],
+                backgroundColor: '#fd7e14'
+            }]
+        };
+        const resolutionCtx = document.getElementById('resolutionChart');
+        if (resolutionCtx) {
+            new Chart(resolutionCtx, { type: 'bar', data: resolutionData });
+        }
+    });
+</script>
+{% endblock %}

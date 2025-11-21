@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Services{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Add New Service</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.add_service') }}">
+                    <div class="mb-3">
+                        <label for="service_name" class="form-label">Service Name</label>
+                        <input type="text" class="form-control" id="service_name" name="service_name" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Service</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> Existing Services</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in all_services %}
+                            <tr>
+                                <td>{{ service[0] }}</td>
+                                <td>{{ service[1] }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ service[0] }}">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <form method="POST" action="{{ url_for('admin.delete_service', service_id=service[0]) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Modal -->
+                            <div class="modal fade" id="editModal{{ service[0] }}" tabindex="-1" aria-labelledby="editModalLabel{{ service[0] }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModalLabel{{ service[0] }}">Edit Service</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('admin.edit_service', service_id=service[0]) }}">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="service_name" class="form-label">Service Name</label>
+                                                    <input type="text" class="form-control" id="service_name" name="service_name" value="{{ service[1] }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
