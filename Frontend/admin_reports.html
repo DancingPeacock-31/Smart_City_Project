@@ -10,7 +10,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Complaints by Status</div>
             <div class="card-body">
-                <canvas id="statusChart" data-status="{{ status_data|tojson }}"></canvas>
+                <canvas id="statusChart"></canvas>
             </div>
         </div>
     </div>
@@ -18,7 +18,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Complaints by Service</div>
             <div class="card-body">
-                <canvas id="serviceChart" data-service="{{ service_data|tojson }}"></canvas>
+                <canvas id="serviceChart"></canvas>
             </div>
         </div>
     </div>
@@ -29,7 +29,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Complaints Over Time</div>
             <div class="card-body">
-                <canvas id="timeChart" data-time="{{ complaints_over_time_data|tojson }}"></canvas>
+                <canvas id="timeChart"></canvas>
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Complaints by Location</div>
             <div class="card-body">
-                <canvas id="locationChart" data-location="{{ complaints_by_location|tojson }}"></canvas>
+                <canvas id="locationChart"></canvas>
             </div>
         </div>
     </div>
@@ -48,12 +48,162 @@
         <div class="card shadow-sm">
             <div class="card-header">Average Resolution Time (Days)</div>
             <div class="card-body">
-                <canvas id="resolutionChart" data-resolution="{{ resolution_time_data|tojson }}"></canvas>
+                <canvas id="resolutionChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='js/admin_reports.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Data from Flask/Jinja2
+    const complaintsByStatus = {{ complaints_by_status | default({}) | tojson }};
+    const complaintsByService = {{ complaints_by_service | default({}) | tojson }};
+    const complaintsOverTime = {{ complaints_over_time | default({}) | tojson }};
+    const complaintsByLocation = {{ complaints_by_location | default({}) | tojson }};
+    const avgResolutionDays = {{ avg_resolution_days | default([]) | tojson }};
+
+    // Helper function to check if data is empty
+    const isDataEmpty = (data) => {
+        return data === null || (typeof data === 'object' && Object.keys(data).length === 0) || (Array.isArray(data) && data.length === 0);
+    };
+
+    // 1. Complaints by Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    if (!isDataEmpty(complaintsByStatus)) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(complaintsByStatus),
+                datasets: [{
+                    label: 'Complaints by Status',
+                    data: Object.values(complaintsByStatus),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                }]
+            }
+        });
+    }
+
+    // 2. Complaints by Service Chart
+    const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+    if (!isDataEmpty(complaintsByService)) {
+        new Chart(serviceCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(complaintsByService),
+                datasets: [{
+                    label: 'Number of Complaints',
+                    data: Object.values(complaintsByService),
+                    backgroundColor: '#36A2EB',
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Complaints Over Time Chart
+    const timeCtx = document.getElementById('timeChart').getContext('2d');
+    if (!isDataEmpty(complaintsOverTime)) {
+        new Chart(timeCtx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(complaintsOverTime),
+                datasets: [{
+                    label: 'Number of Complaints',
+                    data: Object.values(complaintsOverTime),
+                    borderColor: '#FF6384',
+                    fill: false,
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 4. Complaints by Location Chart
+    const locationCtx = document.getElementById('locationChart').getContext('2d');
+    if (!isDataEmpty(complaintsByLocation)) {
+        new Chart(locationCtx, {
+            type: 'polarArea',
+            data: {
+                labels: Object.keys(complaintsByLocation),
+                datasets: [{
+                    label: 'Complaints by Location',
+                    data: Object.values(complaintsByLocation),
+                    backgroundColor: [
+                        '#FF6384', '#4BC0C0', '#FFCE56', '#E7E9ED', '#36A2EB'
+                    ],
+                }]
+            }
+        });
+    }
+
+    // 5. Average Resolution Time Chart
+    const resolutionCtx = document.getElementById('resolutionChart').getContext('2d');
+    if (!isDataEmpty(avgResolutionDays)) {
+        // For a histogram, we need to process the data into bins
+        const resolutionData = avgResolutionDays;
+        const binSize = 5; // e.g., 0-5 days, 5-10 days
+        const maxDays = Math.max(...resolutionData);
+        const bins = {};
+        for (let i = 0; i <= maxDays; i += binSize) {
+            const binEnd = i + binSize;
+            const binName = `${i}-${binEnd} days`;
+            bins[binName] = 0;
+        }
+
+        resolutionData.forEach(days => {
+            for (let i = 0; i <= maxDays; i += binSize) {
+                const binEnd = i + binSize;
+                if (days >= i && days < binEnd) {
+                    const binName = `${i}-${binEnd} days`;
+                    bins[binName]++;
+                    break;
+                }
+            }
+        });
+
+        new Chart(resolutionCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(bins),
+                datasets: [{
+                    label: 'Number of Complaints',
+                    data: Object.values(bins),
+                    backgroundColor: '#4BC0C0',
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Resolution Time (Days)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

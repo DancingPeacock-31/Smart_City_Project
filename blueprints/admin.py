@@ -153,32 +153,38 @@ def reports():
             # Complaints by status
             cursor.execute("SELECT status, COUNT(*) as count FROM complaint GROUP BY status")
             status_data = cursor.fetchall()
-            
+            complaints_by_status = {item['status']: item['count'] for item in status_data} if status_data else {}
+
             # Complaints by service
             cursor.execute("SELECT s.service_name, COUNT(*) as count FROM complaint c JOIN service s ON c.service_id = s.service_id GROUP BY s.service_name")
             service_data = cursor.fetchall()
+            complaints_by_service = {item['service_name']: item['count'] for item in service_data} if service_data else {}
 
             # Complaints over time
             cursor.execute("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM complaint GROUP BY month ORDER BY month")
             complaints_over_time_data = cursor.fetchall()
+            complaints_over_time = {item['month']: item['count'] for item in complaints_over_time_data} if complaints_over_time_data else {}
 
             # Complaints by location
             cursor.execute("SELECT location, COUNT(*) as count FROM complaint GROUP BY location")
-            complaints_by_location = cursor.fetchall()
+            location_data = cursor.fetchall()
+            complaints_by_location = {item['location']: item['count'] for item in location_data} if location_data else {}
 
             # Average resolution time
-            cursor.execute("SELECT s.service_name, AVG(DATEDIFF(updated_at, created_at)) as avg_resolution_time FROM complaint c JOIN service s ON c.service_id = s.service_id WHERE status = 'Resolved' GROUP BY s.service_name")
+            cursor.execute("SELECT DATEDIFF(updated_at, created_at) as resolution_days FROM complaint WHERE status = 'Resolved' AND updated_at IS NOT NULL AND created_at IS NOT NULL")
             resolution_time_data = cursor.fetchall()
+            avg_resolution_days = [item['resolution_days'] for item in resolution_time_data] if resolution_time_data else []
+
         finally:
             db.close()
         
         return render_template(
             'admin_reports.html', 
-            status_data=status_data, 
-            service_data=service_data, 
-            complaints_over_time_data=complaints_over_time_data,
+            complaints_by_status=complaints_by_status,
+            complaints_by_service=complaints_by_service,
+            complaints_over_time=complaints_over_time,
             complaints_by_location=complaints_by_location,
-            resolution_time_data=resolution_time_data,
+            avg_resolution_days=avg_resolution_days,
             show_sidebar=True
         )
     return redirect(url_for('admin.login'))

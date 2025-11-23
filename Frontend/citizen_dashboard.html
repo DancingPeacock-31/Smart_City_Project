@@ -38,7 +38,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Your Complaints Status</div>
             <div class="card-body">
-                <canvas id="statusChart" data-status="{{ status_counts|tojson }}"></canvas>
+                <canvas id="statusChart" data-status="{{ status_counts|default({})|tojson }}"></canvas>
             </div>
         </div>
     </div>
