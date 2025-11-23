@@ -11,6 +11,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('admin.add_service') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label for="service_name" class="form-label">Service Name</label>
                         <input type="text" class="form-control" id="service_name" name="service_name" required>
@@ -38,13 +39,14 @@
                         <tbody>
                             {% for service in all_services %}
                             <tr>
-                                <td>{{ service[0] }}</td>
-                                <td>{{ service[1] }}</td>
+                                <td>{{ service.service_id }}</td>
+                                <td>{{ service.service_name }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ service[0] }}">
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ service.service_id }}">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
-                                    <form method="POST" action="{{ url_for('admin.delete_service', service_id=service[0]) }}" class="d-inline">
+                                    <form method="POST" action="{{ url_for('admin.delete_service', service_id=service.service_id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-danger">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
@@ -53,18 +55,19 @@
                             </tr>
 
                             <!-- Edit Modal -->
-                            <div class="modal fade" id="editModal{{ service[0] }}" tabindex="-1" aria-labelledby="editModalLabel{{ service[0] }}" aria-hidden="true">
+                            <div class="modal fade" id="editModal{{ service.service_id }}" tabindex="-1" aria-labelledby="editModalLabel{{ service.service_id }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="editModalLabel{{ service[0] }}">Edit Service</h5>
+                                            <h5 class="modal-title" id="editModalLabel{{ service.service_id }}">Edit Service</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <form method="POST" action="{{ url_for('admin.edit_service', service_id=service[0]) }}">
+                                        <form method="POST" action="{{ url_for('admin.edit_service', service_id=service.service_id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <div class="modal-body">
                                                 <div class="mb-3">
                                                     <label for="service_name" class="form-label">Service Name</label>
-                                                    <input type="text" class="form-control" id="service_name" name="service_name" value="{{ service[1] }}" required>
+                                                    <input type="text" class="form-control" id="service_name" name="service_name" value="{{ service.service_name }}" required>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">

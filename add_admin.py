@@ -2,15 +2,31 @@
 from werkzeug.security import generate_password_hash
 import mysql.connector
 import os
+from dotenv import load_dotenv
 
-# --- IMPORTANT: SET YOUR DATABASE PASSWORD ---
-# If your MySQL password is not 'Shub#@3107', update the value below.
-db_password = os.environ.get('DB_PASSWORD', 'Shub#@3107')
-# -----------------------------------------
+# Load environment variables from .env file
+load_dotenv()
 
-# New admin credentials
+# --- IMPORTANT: SET YOUR ENVIRONMENT VARIABLES ---
+# Before running this script, ensure you have set the following environment variables:
+#
+#   export DB_PASSWORD='your_mysql_password'
+#   export ADMIN_PASSWORD='your_desired_admin_password'
+#
+# If these variables are not set, the script will fail.
+# ----------------------------------------------------
+
+# Get credentials from environment variables
+db_password = os.environ.get('DB_PASSWORD')
+new_password = os.environ.get('ADMIN_PASSWORD')
 new_username = 'admin'
-new_password = 'Shub#@3107' # You will use this plain password to log in
+
+# --- VALIDATION ---
+if not db_password or not new_password:
+    print("Error: Required environment variables 'DB_PASSWORD' and 'ADMIN_PASSWORD' are not set.")
+    print("Please set these variables before running the script.")
+    exit(1)
+# --------------------
 
 try:
     # Establish database connection

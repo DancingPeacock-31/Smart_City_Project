@@ -9,15 +9,14 @@
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('citizen.submit_complaint') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="service_id" class="form-label">Service Type</label>
                     <select class="form-select" id="service_id" name="service_id" required>
-                        <option value="1">Water Supply</option>
-                        <option value="2">Streetlights</option>
-                        <option value="3">Sanitation</option>
-                        <option value="4">Roads</option>
-                        <option value="5">Garbage Collection</option>
+                        {% for service in services %}
+                            <option value="{{ service.service_id }}">{{ service.service_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -34,6 +33,17 @@
     </div>
 </div>
 
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Your Complaints Status</div>
+            <div class="card-body">
+                <canvas id="statusChart" data-status="{{ status_counts|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-header">
         <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i> Your Complaints</h5>
@@ -44,7 +54,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Service ID</th>
+                        <th>Service</th>
                         <th>Description</th>
                         <th>Location</th>
                         <th>Status</th>
@@ -54,20 +64,20 @@
                 <tbody>
                     {% for complaint in complaints %}
                     <tr>
-                        <td>{{ complaint[0] }}</td>
-                        <td>{{ complaint[2] }}</td>
-                        <td>{{ complaint[3] }}</td>
-                        <td>{{ complaint[4] }}</td>
+                        <td>{{ complaint.complaint_id }}</td>
+                        <td>{{ complaint.service_name }}</td>
+                        <td>{{ complaint.description }}</td>
+                        <td>{{ complaint.location }}</td>
                         <td>
                             <span class="badge 
-                                {% if complaint[5] == 'Pending' %}bg-warning
-                                {% elif complaint[5] == 'In Progress' %}bg-info
-                                {% elif complaint[5] == 'Resolved' %}bg-success
+                                {% if complaint.status == 'Pending' %}bg-warning
+                                {% elif complaint.status == 'In Progress' %}bg-info
+                                {% elif complaint.status == 'Resolved' %}bg-success
                                 {% endif %}">
-                                {{ complaint[5] }}
+                                {{ complaint.status }}
                             </span>
                         </td>
-                        <td>{{ complaint[6] }}</td>
+                        <td>{{ complaint.created_at.strftime('%Y-%m-%d') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -75,4 +85,7 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/citizen_charts.js') }}"></script>
 {% endblock %}

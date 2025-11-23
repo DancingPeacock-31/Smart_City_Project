@@ -1,17 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
-import mysql.connector
-import os
+from .db import get_db_connection
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
-
-def get_db_connection():
-    return mysql.connector.connect(
-        host=os.environ.get('DB_HOST'),
-        user=os.environ.get('DB_USER'),
-        password=os.environ.get('DB_PASSWORD'),
-        database=os.environ.get('DB_NAME')
-    )
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -20,13 +11,15 @@ def login():
         password = request.form['password']
         
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM admin WHERE username = %s", (username,))
-        admin = cursor.fetchone()
-        db.close()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM admin WHERE username = %s", (username,))
+            admin = cursor.fetchone()
+        finally:
+            db.close()
         
-        if admin and check_password_hash(admin[2], password):
-            session['admin_id'] = admin[0]
+        if admin and check_password_hash(admin['password'], password):
+            session['admin_id'] = admin['admin_id']
             return redirect(url_for('admin.dashboard'))
         else:
             return "Invalid credentials"
@@ -36,35 +29,37 @@ def login():
 def dashboard():
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT c.*, ci.name, s.service_name FROM complaint c JOIN citizen ci ON c.citizen_id = ci.citizen_id JOIN service s ON c.service_id = s.service_id")
-        all_complaints = cursor.fetchall()
-        
-        # For charts
-        cursor.execute("SELECT status, COUNT(*) as count FROM complaint GROUP BY status")
-        status_data = cursor.fetchall()
-        
-        cursor.execute("SELECT s.service_name, COUNT(*) as count FROM complaint c JOIN service s ON c.service_id = s.service_id GROUP BY s.service_name")
-        service_data = cursor.fetchall()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT c.*, ci.name, s.service_name FROM complaint c JOIN citizen ci ON c.citizen_id = ci.citizen_id JOIN service s ON c.service_id = s.service_id")
+            all_complaints = cursor.fetchall()
+            
+            # For stats cards
+            cursor.execute("SELECT status, COUNT(*) as count FROM complaint GROUP BY status")
+            status_data = cursor.fetchall()
+            status_counts = {item['status']: item['count'] for item in status_data}
 
-        cursor.execute("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM complaint GROUP BY month ORDER BY month")
-        complaints_over_time_data = cursor.fetchall()
+            # For charts
+            cursor.execute("SELECT s.service_name, COUNT(*) as count FROM complaint c JOIN service s ON c.service_id = s.service_id GROUP BY s.service_name")
+            service_data = cursor.fetchall()
+            service_chart_labels = [item['service_name'] for item in service_data]
+            service_chart_data = [item['count'] for item in service_data]
 
-        cursor.execute("SELECT location, COUNT(*) as count FROM complaint GROUP BY location")
-        complaints_by_location = cursor.fetchall()
-
-        cursor.execute("SELECT s.service_name, AVG(DATEDIFF(updated_at, created_at)) FROM complaint c JOIN service s ON c.service_id = s.service_id WHERE status = 'Resolved' GROUP BY s.service_name")
-        resolution_time_data = cursor.fetchall()
-        db.close()
+            # Complaints by location
+            cursor.execute("SELECT location, COUNT(*) as count FROM complaint GROUP BY location")
+            complaints_by_location = cursor.fetchall()
+        finally:
+            db.close()
         
         return render_template(
             'admin_dashboard.html', 
             all_complaints=all_complaints, 
-            status_data=status_data, 
-            service_data=service_data, 
-            complaints_over_time_data=complaints_over_time_data,
+            status_counts=status_counts,
+            status_data=status_data, # Still needed for the status chart
+            service_chart_labels=service_chart_labels,
+            service_chart_data=service_chart_data,
             complaints_by_location=complaints_by_location,
-            resolution_time_data=resolution_time_data
+            show_sidebar=True
         )
     return redirect(url_for('admin.login'))
 
@@ -72,10 +67,12 @@ def dashboard():
 def update_status(complaint_id, status):
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("UPDATE complaint SET status = %s WHERE complaint_id = %s", (status, complaint_id))
-        db.commit()
-        db.close()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("UPDATE complaint SET status = %s WHERE complaint_id = %s", (status, complaint_id))
+            db.commit()
+        finally:
+            db.close()
         return redirect(url_for('admin.dashboard'))
     return redirect(url_for('admin.login'))
 
@@ -83,22 +80,26 @@ def update_status(complaint_id, status):
 def users():
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM citizen")
-        all_users = cursor.fetchall()
-        db.close()
-        return render_template('admin_users.html', all_users=all_users)
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM citizen")
+            all_users = cursor.fetchall()
+        finally:
+            db.close()
+        return render_template('admin_users.html', all_users=all_users, show_sidebar=True)
     return redirect(url_for('admin.login'))
 
 @admin_bp.route('/services')
 def services():
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM service")
-        all_services = cursor.fetchall()
-        db.close()
-        return render_template('admin_services.html', all_services=all_services)
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM service")
+            all_services = cursor.fetchall()
+        finally:
+            db.close()
+        return render_template('admin_services.html', all_services=all_services, show_sidebar=True)
     return redirect(url_for('admin.login'))
 
 @admin_bp.route('/services/add', methods=['POST'])
@@ -106,10 +107,12 @@ def add_service():
     if 'admin_id' in session:
         service_name = request.form['service_name']
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("INSERT INTO service (service_name) VALUES (%s)", (service_name,))
-        db.commit()
-        db.close()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("INSERT INTO service (service_name) VALUES (%s)", (service_name,))
+            db.commit()
+        finally:
+            db.close()
         return redirect(url_for('admin.services'))
     return redirect(url_for('admin.login'))
 
@@ -118,10 +121,12 @@ def edit_service(service_id):
     if 'admin_id' in session:
         service_name = request.form['service_name']
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("UPDATE service SET service_name = %s WHERE service_id = %s", (service_name, service_id))
-        db.commit()
-        db.close()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("UPDATE service SET service_name = %s WHERE service_id = %s", (service_name, service_id))
+            db.commit()
+        finally:
+            db.close()
         return redirect(url_for('admin.services'))
     return redirect(url_for('admin.login'))
 
@@ -129,10 +134,12 @@ def edit_service(service_id):
 def delete_service(service_id):
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("DELETE FROM service WHERE service_id = %s", (service_id,))
-        db.commit()
-        db.close()
+        try:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("DELETE FROM service WHERE service_id = %s", (service_id,))
+            db.commit()
+        finally:
+            db.close()
         return redirect(url_for('admin.services'))
     return redirect(url_for('admin.login'))
 
@@ -140,29 +147,30 @@ def delete_service(service_id):
 def reports():
     if 'admin_id' in session:
         db = get_db_connection()
-        cursor = db.cursor()
+        try:
+            cursor = db.cursor(dictionary=True)
 
-        # Complaints by status
-        cursor.execute("SELECT status, COUNT(*) as count FROM complaint GROUP BY status")
-        status_data = cursor.fetchall()
-        
-        # Complaints by service
-        cursor.execute("SELECT s.service_name, COUNT(*) as count FROM complaint c JOIN service s ON c.service_id = s.service_id GROUP BY s.service_name")
-        service_data = cursor.fetchall()
+            # Complaints by status
+            cursor.execute("SELECT status, COUNT(*) as count FROM complaint GROUP BY status")
+            status_data = cursor.fetchall()
+            
+            # Complaints by service
+            cursor.execute("SELECT s.service_name, COUNT(*) as count FROM complaint c JOIN service s ON c.service_id = s.service_id GROUP BY s.service_name")
+            service_data = cursor.fetchall()
 
-        # Complaints over time
-        cursor.execute("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM complaint GROUP BY month ORDER BY month")
-        complaints_over_time_data = cursor.fetchall()
+            # Complaints over time
+            cursor.execute("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM complaint GROUP BY month ORDER BY month")
+            complaints_over_time_data = cursor.fetchall()
 
-        # Complaints by location
-        cursor.execute("SELECT location, COUNT(*) as count FROM complaint GROUP BY location")
-        complaints_by_location = cursor.fetchall()
+            # Complaints by location
+            cursor.execute("SELECT location, COUNT(*) as count FROM complaint GROUP BY location")
+            complaints_by_location = cursor.fetchall()
 
-        # Average resolution time
-        cursor.execute("SELECT s.service_name, AVG(DATEDIFF(updated_at, created_at)) FROM complaint c JOIN service s ON c.service_id = s.service_id WHERE status = 'Resolved' GROUP BY s.service_name")
-        resolution_time_data = cursor.fetchall()
-        
-        db.close()
+            # Average resolution time
+            cursor.execute("SELECT s.service_name, AVG(DATEDIFF(updated_at, created_at)) as avg_resolution_time FROM complaint c JOIN service s ON c.service_id = s.service_id WHERE status = 'Resolved' GROUP BY s.service_name")
+            resolution_time_data = cursor.fetchall()
+        finally:
+            db.close()
         
         return render_template(
             'admin_reports.html', 
@@ -170,6 +178,7 @@ def reports():
             service_data=service_data, 
             complaints_over_time_data=complaints_over_time_data,
             complaints_by_location=complaints_by_location,
-            resolution_time_data=resolution_time_data
+            resolution_time_data=resolution_time_data,
+            show_sidebar=True
         )
     return redirect(url_for('admin.login'))

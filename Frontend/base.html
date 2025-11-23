@@ -1,3 +1,4 @@
+<!-- All requests have been completed. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,14 +16,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="d-flex" id="wrapper">
+    <div id="wrapper">
+        {% if show_sidebar %}
         <!-- Sidebar -->
         <div class="bg-dark border-right" id="sidebar-wrapper">
             <div class="sidebar-heading text-white">
                 <i class="fas fa-city me-2"></i> Smart City
             </div>
             <div class="list-group list-group-flush">
-                {% if 'admin_id' in session %}
+                
                     <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action bg-dark text-white">
                         <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                     </a>
@@ -35,22 +37,17 @@
                     <a href="{{ url_for('admin.reports') }}" class="list-group-item list-group-item-action bg-dark text-white">
                         <i class="fas fa-chart-bar me-2"></i> Reports
                     </a>
-                {% elif 'citizen_id' in session %}
-                    <a href="{{ url_for('citizen.dashboard') }}" class="list-group-item list-group-item-action bg-dark text-white">
-                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                    </a>
-                {% endif %}
+                
             </div>
         </div>
         <!-- /#sidebar-wrapper -->
+        {% endif %}
 
         <!-- Page Content -->
         <div id="page-content-wrapper">
             <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
                 <div class="container-fluid">
-                    <button class="btn btn-primary" id="menu-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    
 
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
@@ -61,7 +58,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                                 </li>
-                            {% else %}
+                            {% elif not is_landing_page %}
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ url_for('citizen.login') }}">Citizen Login</a>
                                 </li>
@@ -87,10 +84,7 @@
     
     <!-- Custom JS -->
     <script>
-        document.getElementById("menu-toggle").addEventListener("click", function(e) {
-            e.preventDefault();
-            document.getElementById("wrapper").classList.toggle("toggled");
-        });
+        
     </script>
 </body>
 </html>

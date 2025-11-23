@@ -21,10 +21,10 @@
                 <tbody>
                     {% for user in all_users %}
                     <tr>
-                        <td>{{ user[0] }}</td>
-                        <td>{{ user[1] }}</td>
-                        <td>{{ user[2] }}</td>
-                        <td>{{ user[3] }}</td>
+                        <td>{{ user.citizen_id }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
