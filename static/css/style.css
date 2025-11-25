@@ -52,7 +52,10 @@ body {
 }
 
 .circle:nth-child(4) {
-    width: 100px;
+    width: 100px;.bg-warning,
+.btn-warning {
+    color: #000 !important;
+}
     height: 100px;
     left: 90%;
     animation-duration: 18s;
@@ -76,7 +79,9 @@ body {
     animation: glow 5s infinite alternate;
 }
 
-.node:nth-child(6) {
+.node:nth-child(6) {.card.bg-warning {
+    color: #333 !important;
+}
     top: 20%;
     left: 25%;
     animation-delay: 1s;

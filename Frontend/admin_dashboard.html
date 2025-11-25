@@ -24,7 +24,7 @@
     </div>
     
     <div class="col-md-3">
-        <div class="card text-white bg-warning shadow">
+        <div class="card text-white bg-danger shadow">
 <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -56,11 +56,11 @@
     </div>
     
     <div class="col-md-3">
-        <div class="card text-white bg-info shadow">
+        <div class="card text-dark bg-warning shadow">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-white-50">In Progress</h6>
+                        <h6>In Progress</h6>
                         <h2 class="mb-0" id="totalInProgress">{{ status_counts.get('In Progress', 0) }}</h2>
                     </div>
                     <div class="display-4">
@@ -101,8 +101,8 @@
                         <td>{{ complaint.location }}</td>
                         <td>
                             <span class="badge 
-                                {% if complaint.status == 'Pending' %}bg-warning
-                                {% elif complaint.status == 'In Progress' %}bg-info
+                                {% if complaint.status == 'Pending' %}bg-danger
+                                {% elif complaint.status == 'In Progress' %}bg-warning
                                 {% elif complaint.status == 'Resolved' %}bg-success
                                 {% endif %}">
                                 {{ complaint.status }}
@@ -112,7 +112,7 @@
                             <div class="btn-group">
                                 <form method="POST" action="{{ url_for('admin.update_status', complaint_id=complaint.complaint_id, status='In Progress') }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-info">In Progress</button>
+                                    <button type="submit" class="btn btn-sm btn-warning">In Progress</button>
                                 </form>
                                 <form method="POST" action="{{ url_for('admin.update_status', complaint_id=complaint.complaint_id, status='Resolved') }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>

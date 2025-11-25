@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: 'Complaints by Status',
                     data: [pending, inProgress, resolved],
-                    backgroundColor: [colors.yellow, colors.cyan, colors.green],
+                    backgroundColor: [colors.red, colors.yellow, colors.green],
                     hoverOffset: 4
                 }]
             },

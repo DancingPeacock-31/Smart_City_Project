@@ -65,8 +65,8 @@
                         <td>{{ complaint.location }}</td>
                         <td>
                             <span class="badge 
-                                {% if complaint.status == 'Pending' %}bg-warning
-                                {% elif complaint.status == 'In Progress' %}bg-info
+                                {% if complaint.status == 'Pending' %}bg-danger
+                                {% elif complaint.status == 'In Progress' %}bg-warning
                                 {% elif complaint.status == 'Resolved' %}bg-success
                                 {% endif %}">
                                 {{ complaint.status }}
