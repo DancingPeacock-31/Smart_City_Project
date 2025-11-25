@@ -92,3 +92,26 @@ def submit_complaint():
             db.close()
         return redirect(url_for('citizen.dashboard'))
     return redirect(url_for('citizen.login'))
+
+@citizen_bp.route('/graphical_view')
+def graphical_view():
+    if 'citizen_id' in session:
+        citizen_id = session['citizen_id']
+        db = get_db_connection()
+        try:
+            cursor = db.cursor(dictionary=True)
+
+            # Fetch complaints for the citizen
+            cursor.execute("SELECT c.*, s.service_name FROM complaint c JOIN service s ON c.service_id = s.service_id WHERE c.citizen_id = %s", (citizen_id,))
+            complaints = cursor.fetchall()
+
+            # Calculate status counts for the chart
+            status_counts = {}
+            for complaint in complaints:
+                status = complaint['status']
+                status_counts[status] = status_counts.get(status, 0) + 1
+        finally:
+            db.close()
+        return render_template('citizen_graphical_view.html', status_counts=status_counts)
+    return redirect(url_for('citizen.login'))
+

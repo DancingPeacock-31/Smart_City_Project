@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Graphical View{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Your Complaints Status</div>
+            <div class="card-body">
+                <canvas id="statusChart" data-status='{{ status_counts|default({})|tojson|safe }}'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="{{ url_for('static', filename='js/citizen_charts.js') }}"></script>
+{% endblock %}

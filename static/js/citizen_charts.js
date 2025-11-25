@@ -6,6 +6,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const labels = Object.keys(statusData);
         const data = Object.values(statusData);
 
+        const colorMap = {
+            'Pending': 'rgba(220, 53, 69, 0.8)',   // Red
+            'In Progress': 'rgba(255, 193, 7, 0.8)', // Yellow
+            'Resolved': 'rgba(40, 167, 69, 0.8)'     // Green
+        };
+
+        const backgroundColors = labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'); // Default to grey
+
+        // Register the plugin
+        Chart.register(ChartDataLabels);
+
         new Chart(statusChartCanvas, {
             type: 'doughnut',
             data: {
@@ -13,19 +24,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Complaints by Status',
                     data: data,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)',
-                        'rgba(255, 159, 64, 0.7)'
-                    ]
+                    backgroundColor: backgroundColors
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        color: '#fff',
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: (value) => {
+                            return value;
+                        }
+                    }
+                }
             }
         });
     }
